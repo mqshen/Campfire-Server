@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link href="css/main.css" media="all" rel="stylesheet" type="text/css" />
+        <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/1.7.2/jquery.min.js'></script>
+        <!--
+        <script src='http://cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js'></script>
+        -->
+        <script src='scripts/application.js'></script>
+        <script src='scripts/socket.io.js'></script>
+    </head>
+    <body>
+        <div class="wrapper" id="login_container">
+            <div class="site clearfix">
+                <div id="site-container" class="context-loader-container">
+                    <div class="auth-form" id="login">
+                        <form accept-charset="UTF-8" action="/session" method="post">
+                            <!--
+                            <div style="margin:0;padding:0;display:inline">
+                                <input name="authenticity_token" type="hidden" value="CkrD7z86z19Z5nZIajhpxGisDaKMA3RdqjrMpHEfMhtE8X4fTyYDLJbA7gUIer8pD7m0wFAOIrXgnDWuz/XxYQ==">
+                                </div>
+                            -->
+                            <div class="auth-form-header">
+                                <h1>Sign in</h1>
+                            </div>
+                            <div class="auth-form-body">
+                                <label for="login_field">
+                                    Username or Email
+                                </label>
+                                <input autocapitalize="off" autocorrect="off" autofocus="autofocus" class="input-block" id="login_field" name="login" tabindex="1" type="text">
+                                <label for="password">
+                                    Password
+                                </label>
+                                <input class="input-block" id="password" name="password" tabindex="2" type="password">
+                                <input class="button" name="commit" tabindex="3" type="submit" value="Sign in">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="chat_container" style="display: none">
+            <div id="chat" class="chatPanel normalPanel">
+                <div class="content">
+                    <div id="chat_leftpanel" class="list">
+                        <div class="top">
+                            <div id="profile" class="title">
+
+                            </div>
+                        </div>
+                        <div class="chatListSearch">
+                            <div class="chatListSearchPanel">
+                                <div class="listOperatorContent">
+                                    <div class="conmu left active" click="switchPanel" un="conversation" id="chooseConversationBtn">
+                                        <a class="conmuButton" href="javascript:;" title="聊天">
+                                            <span class="bag"></span>
+                                            <span id="totalUnreadDot" class="unreadDot" style="display: none;">0</span>
+                                        </a>
+                                    </div>
+                                    <div class="cutOffRule"></div>
+                                    <div class="addr notChooseOpera right" click="switchPanel" un="contact">
+                                        <a class="addrButton " href="javascript:;" title="通讯录">
+                                            <span class="bag"></span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="listContentWrap">
+                            <div class="">
+                                <div class="listContent" id="chat_conversationListContent">
+                                    <div id="conversationContainer">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat lightBorder" style="visibility: visible;">
+                        <div class="chatContainer" style="height: 621px;">
+                            <div class="chatMainPanel" id="chatMainPanel">
+                                <div class="chatTitle">
+                                    <div class="chatNameWrap">
+                                        <p class="chatName" id="messagePanelTitle"></p>
+                                    </div>
+                                </div>
+                                <div class="chatScorll">
+                                    <div id="chat_chatmsglist" class="chatContent" ctrl="1" style="top: 0px; position: absolute;">
+                                    </div>
+                                </div>
+                                <div id="chat_editor" class="chatOperator lightBorder" ctrl="1">
+                                    <div class="inputArea">
+                                        <!--
+                                        <div class="attach">
+                                            <a href="javascript:;" id="sendEmojiIcon" class="func expression" click="showEmojiPanel" title="选择表情"></a>
+                                            <a href="javascript:;" id="screenSnapIcon" class="func screensnap" click="screenSnap" title="发送截屏" style=""></a>
+                                            <form class="left" id="sen" enctype="multipart/form-data" method="post" target="actionFrame" style="">
+                                                <input type="hidden" name="uploadmediarequest" value="{BaseRequest:{}}">
+                                                <a href="javascript:;" class="func file" style="position:relative;display:block;margin:0;" title="文件图片" id="uploadFileContainer">
+                                                    <div style="position: absolute;top:0;left:0; width: 100%; height: 100%;overflow:hidden;filter:alpha(opacity=0);opacity:0;cursor:pointer;">
+                                                        <div>
+                                                            <input change="sendAppMsg@form" type="file" name="filename" style="width:100%;height:100%;margin:0;cursor:pointer;font-size:100px;"></div>
+                                                    </div>
+                                                    <div id="swfUploaderContainer" style="z-index: 3; position: absolute; height: 34px; width: 34px; left: 0px; top: 0px;" title="文件图片">
+                                                        <span id="swfUploaderWrapper" style="top:0;left:0;position:absolute;width:100%;height:34px;margin:0;z-index:2;">
+                                                        </span>
+                                                    </div>
+                                                </a>
+                                            </form>
+                                        </div>
+                                        -->
+                                        <textarea type="text" id="textInput" class="chatInput lightBorder"></textarea>
+                                        <a href="javascript:;" class="chatSend" id="sendMessage"><b>发送</b></a>
+                                        <div id="recordInput" class="recordInput chatInput" style="display:none;"></div>
+                                        <div class="clr"></div>
+                                        <div class="emojiPanel" style="display:none;" id="emojiPanel"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,3 @@
+UpgradeServer(<function1>,HttpResponse(101 Switching Protocols,Empty,List(Upgrade: websocket, Connection: Upgrade, Sec-WebSocket-Accept: 3QwJWsTJVj39BVRJPwVGCY+9noc=),HTTP/1.1))
+[WARN] [09/08/2014 22:17:11.014] [default-akka.actor.default-dispatcher-2] [akka://default/user/ConnectionActives] Failed to select actor 25af9665-aef1-4338-a49a-86a008f47cfb
+[INFO] [09/08/2014 22:17:11.038] [default-akka.actor.default-dispatcher-4] [akka://default/user/socketio-server/$a] http connection of akka://default/user/IO-UHTTP/listener-0/0 upgraded to websocket, sessionId: 25af9665-aef1-4338-a49a-86a008f47cfb.
