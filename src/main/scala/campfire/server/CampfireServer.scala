@@ -8,6 +8,7 @@ import akka.pattern.ask
 import akka.io.IO
 import akka.util.Timeout
 import campfire.server.JsonResult._
+import campfire.server.RoomServerActor.CreateRoom
 import campfire.server.ServerExtension.{Subscribe, OnData, OnEvent}
 import campfire.socketio.ConnectionActive.SendMessage
 import play.api.libs.json.Json
@@ -45,7 +46,8 @@ object Main extends App with  CampfireSslConfiguration {
   implicit val timeout = Timeout(120, TimeUnit.SECONDS)
   implicit val system = ActorSystem()
   val serverExt = ServerExtension(system)
-  implicit val resolver = serverExt.resolver
+  val resolver = serverExt.resolver
+  val roomResolver = serverExt.roomResolver
   import system.dispatcher
 
   case class Message(fromUserName: String, toUserName: String, `type`: Int, content: String, clientMsgId: Long)
@@ -91,12 +93,32 @@ object Main extends App with  CampfireSslConfiguration {
                 }
               }
             }
-          } catch {
+          }
+          catch {
             case e: Exception =>
               e.printStackTrace()
           }
-        case OnEvent("time", args, context) =>
-          println("observed: " + "time" + ", " + args)
+        case event @ OnEvent("create", args, context) =>
+          try {
+            val users = Json.parse(args).as[List[String]]
+            roomResolver ! CreateRoom(users)
+          }
+          catch {
+            case e: Exception =>
+              e.printStackTrace()
+          }
+        case event @ OnEvent("chatRoom", args, context) =>
+          try {
+            import MessageFormat._
+            val packets = Json.parse(args).as[List[Message]]
+            packets.foreach { packet =>
+              roomResolver ! packet
+            }
+          }
+          catch {
+            case e: Exception =>
+              e.printStackTrace()
+          }
         case _ =>
           println("observed: " + value)
       }

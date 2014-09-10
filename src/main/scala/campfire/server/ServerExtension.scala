@@ -4,13 +4,16 @@ import akka.actor._
 import akka.pattern.ask
 import akka.contrib.pattern.DistributedPubSubMediator
 import akka.util.Timeout
+import campfire.server.Main.{MessageFormat, Message, MessageEvent}
 import campfire.server.ServerExtension.{Subscribe, OnData}
 import campfire.socketio
-import campfire.socketio.ConnectionActive.OnPacket
+import campfire.socketio.ConnectionActive.{SendMessage, OnPacket}
 import campfire.socketio.packet._
 import campfire.socketio.{ConnectionActive, ConnectionContext, SocketIOExtension}
+import play.api.libs.json.Json
 import rx.lang.scala.Subject
 
+import scala.collection.concurrent
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
@@ -79,7 +82,70 @@ class ServerExtension(system: ExtendedActorSystem) extends Extension {
 
   val serverActor = system.actorOf(CampfireServerActor.props(mediator), name = CampfireServerActor.shareName)
 
+  val roomResolver = system.actorOf(RoomServerActor.props(resolver), name = RoomServerActor.shareName)
 
+}
+
+
+object RoomServerActor {
+  def props(resolver: ActorRef) = Props(classOf[RoomServerActor], resolver)
+
+  private val rooms = concurrent.TrieMap[String, Set[String]]()
+
+  val shareName = "campfire-roomserver"
+
+  case class CreateRoom(users : List[String])
+  case class QuiteRoom(roomName: String, userName : String)
+  case class Room(name: String, users: List[String])
+
+  object RoomFormat {
+    implicit val roomFormat = Json.format[Room]
+  }
+}
+
+class RoomServerActor(resolver: ActorRef) extends Actor {
+  import RoomServerActor._
+  import java.security.MessageDigest
+
+  def md5(s: String) = {
+    MessageDigest.getInstance("MD5").digest(s.getBytes).map(0xFF & _).map("%02x".format(_)).mkString
+  }
+
+  override def receive: Actor.Receive = {
+    case creatRoom: CreateRoom=>
+      val roomName = md5(creatRoom.users.mkString) + "@room"
+      rooms(roomName) = creatRoom.users.toSet
+      val room = Room(roomName, creatRoom.users)
+      import RoomFormat._
+      room.users.foreach { userName =>
+        SessionManager.getSessionIdByName(userName).map { sessionId =>
+          val result = Json.obj("name" -> "room", "content" -> Json.toJson(room)).toString()
+          resolver ! SendMessage(sessionId, result)
+        }
+      }
+
+    case QuiteRoom(roomName, userName) =>
+      val users = rooms(roomName)
+      rooms(roomName) = users - userName
+
+    case message: Message => {
+      rooms.get(message.toUserName) match {
+        case Some(users) =>
+          import MessageFormat._
+          users.foreach { userName =>
+            if (userName != message.fromUserName) {
+              SessionManager.getSessionIdByName(userName).map { sessionId =>
+                val messageEvent = MessageEvent("chatRoom", message)
+                resolver ! SendMessage(sessionId, Json.toJson(messageEvent).toString())
+              }
+            }
+          }
+        case None =>
+      }
+    }
+    case test =>
+      println(test)
+  }
 }
 
 object CampfireServerActor {

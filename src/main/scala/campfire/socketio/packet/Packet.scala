@@ -16,10 +16,33 @@ sealed trait Packet extends Serializable {
   override def toString = render.utf8String
 }
 
-final case class DisconnectPacket(endpoint: String = "") extends Packet {
+final case class DisconnectPacket(args: Seq[(String, String)] = Nil) extends Packet {
   def code = '0'
 
-  def render = if (endpoint == "") ByteString('0') else ByteString("0::/" + endpoint)
+  def render = args match {
+    case Nil =>
+      ByteString("0:")
+    case _ =>
+      val builder = ByteString.newBuilder
+
+      builder.putByte('0')
+      builder.putByte(':')
+      builder.putByte('?')
+      renderArgs(args, builder)
+
+      builder.result.compact
+  }
+
+  @tailrec
+  private def renderArgs(args: Seq[(String, String)], builder: ByteStringBuilder): ByteStringBuilder = args match {
+    case Seq((x, y), xs @ _*) =>
+      builder.putBytes(x.getBytes).putByte('=').putBytes(y.getBytes)
+      if (xs.nonEmpty) {
+        builder.putByte('&')
+      }
+      renderArgs(xs, builder)
+    case _ => builder
+  }
 }
 
 final case class ConnectPacket(args: Seq[(String, String)] = Nil) extends Packet {

@@ -192,8 +192,10 @@ trait ConnectionActive { _: Actor =>
     PacketParser(payload) match {
       case Success(packets)              =>
         packets foreach onPacket(cmd)
-      case Failure(ex: ParsingException) => log.warning("Invalid socket.io packet: {} ...", payload.take(50).utf8String)
-      case Failure(ex)                   => log.warning("Exception during parse socket.io packet: {} ..., due to: {}", payload.take(50).utf8String, ex)
+      case Failure(ex: ParsingException) =>
+        log.warning("Invalid socket.io packet: {} ...", payload.take(50).utf8String)
+      case Failure(ex)                   =>
+        log.warning("Exception during parse socket.io packet: {} ..., due to: {}", payload.take(50).utf8String, ex)
     }
   }
 
@@ -213,29 +215,21 @@ trait ConnectionActive { _: Actor =>
           sendPacket(packet)
         }
 
-      case DisconnectPacket(endpoint) =>
-        if (endpoint == "") {
-          if (recoveryFinished) {
-            //TODO
-            //publishDisconnect(state.context)
-          }
-          cmd match {
-            case _: Closing => // ignore Closing (which is sent from the Transport) to avoid cycle
-            case _          => state.transportConnection ! Tcp.Close
-          }
-          state.transportConnection = context.system.deadLetters
-          state.context.isConnected = false
-          updateState(cmd, state)
+      case DisconnectPacket(args) =>
+        if (recoveryFinished) {
+          //TODO
+          //publishDisconnect(state.context)
+        }
+        cmd match {
+          case _: Closing => // ignore Closing (which is sent from the Transport) to avoid cycle
+          case _          => state.transportConnection ! Tcp.Close
+        }
+        state.transportConnection = context.system.deadLetters
+        state.context.isConnected = false
+        updateState(cmd, state)
 
-          deactivate()
-          enableIdleTimeout()
-        }
-        else {
-          if (recoveryFinished) {
-            //TODO
-            //publishToNamespace(OnPacket(packet, state.context))
-          }
-        }
+        deactivate()
+        enableIdleTimeout()
       case _ =>
         packet match {
           case x: DataPacket if x.isAckRequested && !x.hasAckData => sendAck(x, "[]")

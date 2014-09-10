@@ -36,10 +36,11 @@ object PacketParser extends Parser {
       Noop
   }
 
-  def Disconnect =
-    rule { "0" ~ { optional("::" ~ optional("/" ~ Endpoint) ~~> (_.getOrElse(""))) ~~> (_.getOrElse("")) } ~~> DisconnectPacket }
+  def Disconnect  =
+    rule { "0:" ~ { optional("?" ~ zeroOrMore(Query, "&")) ~~> (_.getOrElse(Nil)) } ~~> DisconnectPacket }
+    //rule { "0" ~~> DisconnectPacket }
   def Connect =
-    rule { "1::" ~ { optional("?" ~ zeroOrMore(Query, "&")) ~~> (_.getOrElse(Nil)) } ~~> ConnectPacket }
+    rule { "1:" ~ { optional("?" ~ zeroOrMore(Query, "&")) ~~> (_.getOrElse(Nil)) } ~~> ConnectPacket }
   def Heartbeat =
     rule { "2" ~ zeroOrMore(":") ~ push(HeartbeatPacket) }
   def Message =
