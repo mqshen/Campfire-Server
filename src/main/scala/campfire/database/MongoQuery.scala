@@ -9,7 +9,7 @@ import akka.actor.{ ActorSystem, Actor, Props, ActorLogging, ActorRef }
 
 import scala.concurrent.Future
 
-case class User(userName: String, nickName: String, avatar: String, password: String = "")
+case class User(userName: String, nickName: String, avatar: String, password: String = "", deviceToken: String="")
 
 object UserFormat {
   implicit val userFormat = Json.format[User]
@@ -23,6 +23,7 @@ object OperationSyncFormat {
 
 case class UserAuth(userName: String, password: String)
 case class UserSync(userName: String, syncKey: Long)
+case class UserInfo(userName: String)
 
 object MongoQuery {
   def props() = Props(classOf[MongoQuery])
@@ -50,6 +51,22 @@ class MongoQuery extends Actor {
         println("use find correct")
         currentSender ! persons(0)
       }
+    case UserInfo(userName) =>
+      val currentSender = sender()
+
+      import reactivemongo.api._
+      import scala.concurrent.ExecutionContext.Implicits.global
+
+      val collection = db.collection[JSONCollection]("user")
+      val cursor: Cursor[User] = collection.
+        find(Json.obj("userName" -> userName)).
+        cursor[User]
+
+      val futureUsersList: Future[List[User]] = cursor.collect[List]()
+      futureUsersList.map { persons =>
+        println("use find correct")
+        currentSender ! persons(0)
+      }
     case UserSync(userName: String, syncKey: Long) =>
       val currentSender = sender()
       import reactivemongo.api._
@@ -60,10 +77,6 @@ class MongoQuery extends Actor {
         cursor[OperationSync]
 
       val futureUsersList: Future[List[OperationSync]] = cursor.collect[List]()
-      //      futureUsersList onComplete {
-      //        case t =>
-      //          println(t)
-      //      }
       futureUsersList.map { operations =>
         println("use find correct")
         currentSender ! operations

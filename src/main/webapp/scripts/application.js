@@ -87,9 +87,9 @@ $(function(){
             '</div>'
 
         $('#chat_chatmsglist').append(messageHtml)
-        //socket1.emit('chat', {"fromUserName": userName, "toUserName": currentChatUserName, content: message, type: 1, clientMsgId: 123123});
-        socket1.emit('create', 'goldratio', 'mqshen')
-        socket1.emit('chatRoom', {"fromUserName": userName, "toUserName": "42ff77db28bded20aabfb0f32ceabb49@room", content: message, type: 1, clientMsgId: 123123})
+        socket1.emit('chat', {"fromUserName": userName, "toUserName": currentChatUserName, content: message, type: 1, clientMsgId: 123123});
+        //socket1.emit('create', 'goldratio', 'mqshen')
+        //socket1.emit('chatRoom', {"fromUserName": userName, "toUserName": "42ff77db28bded20aabfb0f32ceabb49@room", content: message, type: 1, clientMsgId: 123123})
         $('#textInput').val('');
     }
     function receiveMessage(response) {

@@ -4,7 +4,6 @@ import akka.actor._
 import akka.pattern.ask
 import akka.contrib.pattern.DistributedPubSubMediator
 import akka.util.Timeout
-import campfire.server.Main.{MessageFormat, Message, MessageEvent}
 import campfire.server.ServerExtension.{Subscribe, OnData}
 import campfire.socketio
 import campfire.socketio.ConnectionActive.{SendMessage, OnPacket}

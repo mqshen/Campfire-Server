@@ -7,6 +7,7 @@ import akka.actor._
 import akka.pattern.ask
 import akka.io.IO
 import akka.util.Timeout
+import campfire.notification.NotificationProcessor
 import campfire.server.JsonResult._
 import campfire.server.RoomServerActor.CreateRoom
 import campfire.server.ServerExtension.{Subscribe, OnData, OnEvent}
@@ -24,6 +25,14 @@ object CampfireServer {
   def props(resovler: ActorRef, query: ActorRef) = Props(classOf[CampfireServer], resovler, query)
 }
 
+case class Message(fromUserName: String, toUserName: String, `type`: Int, content: String, clientMsgId: Long)
+case class MessageEvent(name: String, content: Message)
+
+object MessageFormat {
+  implicit val messageFormat = Json.format[Message]
+  implicit val messageeventFormat = Json.format[MessageEvent]
+}
+
 class CampfireServer(resovler: ActorRef, query: ActorRef) extends Actor with ActorLogging {
   def receive = {
     // when a new connection comes in we register a SocketIOConnection actor as the per connection handler
@@ -38,10 +47,6 @@ class CampfireServer(resovler: ActorRef, query: ActorRef) extends Actor with Act
 
 object Main extends App with  CampfireSslConfiguration {
 
-  object MessageFormat {
-    implicit val messageFormat = Json.format[Message]
-    implicit val messageeventFormat = Json.format[MessageEvent]
-  }
 
   implicit val timeout = Timeout(120, TimeUnit.SECONDS)
   implicit val system = ActorSystem()
@@ -50,13 +55,11 @@ object Main extends App with  CampfireSslConfiguration {
   val roomResolver = serverExt.roomResolver
   import system.dispatcher
 
-  case class Message(fromUserName: String, toUserName: String, `type`: Int, content: String, clientMsgId: Long)
-  case class MessageEvent(name: String, content: Message)
 
   ReactiveMongoPlugin.start(system)
 
   val mongoActor = system.actorOf(MongoQuery.props())
-
+  val notificationProcessor = system.actorOf(NotificationProcessor.props())
 
   val observer = new Observer[OnEvent] {
     override def onNext(value: OnEvent) {
@@ -70,8 +73,12 @@ object Main extends App with  CampfireSslConfiguration {
                 val messageEvent = MessageEvent("chat", packet)
                 resolver ! SendMessage(sessionId, Json.toJson(messageEvent).toString())
               }
+              .getOrElse {
+                notificationProcessor ! packet
+              }
             }
-          } catch {
+          }
+          catch {
             case e: Exception =>
               e.printStackTrace()
           }
