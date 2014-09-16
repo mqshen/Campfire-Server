@@ -1,29 +1,27 @@
 package campfire.notification.apns.internal
 
-import java.io.{IOException, DataOutputStream, ByteArrayOutputStream, InputStream}
+import java.io.{ IOException, DataOutputStream, ByteArrayOutputStream, InputStream }
 import java.security.KeyStore
 import java.util.regex.Pattern
-import javax.net.ssl.{SSLContext, TrustManagerFactory, KeyManagerFactory}
-
+import javax.net.ssl.{ SSLContext, TrustManagerFactory, KeyManagerFactory }
 
 /**
  * Created by goldratio on 9/14/14.
  */
 object Utilities {
 
-  def newSSLContext(cert: InputStream , password: String, ksType: String, ksAlgorithm: String): SSLContext = {
+  def newSSLContext(cert: InputStream, password: String, ksType: String, ksAlgorithm: String): SSLContext = {
     try {
       val ks = KeyStore.getInstance(ksType)
       ks.load(cert, password.toCharArray())
       newSSLContext(ks, password, ksAlgorithm)
-    }
-    catch {
+    } catch {
       case e: Exception =>
         throw e
     }
   }
 
-  def newSSLContext(ks: KeyStore , password: String, ksAlgorithm: String ): SSLContext = {
+  def newSSLContext(ks: KeyStore, password: String, ksAlgorithm: String): SSLContext = {
     try {
       // Get a KeyManager and initialize it
       val kmf = KeyManagerFactory.getInstance(ksAlgorithm)
@@ -35,9 +33,8 @@ object Utilities {
       val sslContext = SSLContext.getInstance("TLS")
       sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null)
       sslContext
-    }
-    catch {
-      case e: Exception=>
+    } catch {
+      case e: Exception =>
         throw e
     }
   }
@@ -60,12 +57,10 @@ object Utilities {
       (a - 'a') + 10
     } else if ('A' <= a && a <= 'F') {
       (a - 'A') + 10
-    }
-    else {
+    } else {
       throw new RuntimeException("Invalid hex character: " + a)
     }
   }
-
 
   def marshall(command: Byte, deviceToken: Array[Byte], payload: Array[Byte]): Array[Byte] = {
     val boas = new ByteArrayOutputStream()
@@ -78,8 +73,7 @@ object Utilities {
       dos.writeShort(payload.length)
       dos.write(payload)
       boas.toByteArray()
-    }
-    catch {
+    } catch {
       case e: IOException =>
         throw new AssertionError()
     }

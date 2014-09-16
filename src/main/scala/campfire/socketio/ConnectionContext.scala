@@ -1,7 +1,7 @@
 package campfire.socketio
 
 import campfire.socketio.transport.Transport
-import spray.http.{HttpOrigin, Uri}
+import spray.http.{ HttpOrigin, Uri }
 
 /**
  * Created by goldratio on 9/8/14.

@@ -36,9 +36,9 @@ object PacketParser extends Parser {
       Noop
   }
 
-  def Disconnect  =
+  def Disconnect =
     rule { "0:" ~ { optional("?" ~ zeroOrMore(Query, "&")) ~~> (_.getOrElse(Nil)) } ~~> DisconnectPacket }
-    //rule { "0" ~~> DisconnectPacket }
+  //rule { "0" ~~> DisconnectPacket }
   def Connect =
     rule { "1:" ~ { optional("?" ~ zeroOrMore(Query, "&")) ~~> (_.getOrElse(Nil)) } ~~> ConnectPacket }
   def Heartbeat =
@@ -57,7 +57,7 @@ object PacketParser extends Parser {
     rule { "8" ~ push(NoopPacket) }
 
   def GenericMessagePre = rule({ optional(MessageId) ~~> (_.getOrElse(-1L)) }
-    ~ { optional("+" ~ push(true)) ~~> (_.getOrElse(false)) } )
+    ~ { optional("+" ~ push(true)) ~~> (_.getOrElse(false)) })
 
   def StrData = rule { push(new StringBuilder) ~ zeroOrMore(!anyOf("\ufffd") ~ ANY ~:% (withContext(appendToSb(_)(_)))) ~~> (_.toString) }
 

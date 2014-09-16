@@ -1,6 +1,6 @@
 package campfire.socketio
 
-import akka.actor.{PoisonPill, Cancellable, ActorRef, Actor}
+import akka.actor.{ PoisonPill, Cancellable, ActorRef, Actor }
 import akka.contrib.pattern.DistributedPubSubMediator.Publish
 import akka.event.LoggingAdapter
 import akka.io.Tcp
@@ -11,12 +11,12 @@ import campfire.socketio
 import campfire.socketio.packet._
 import campfire.socketio.transport.Transport
 import org.parboiled.errors.ParsingException
-import spray.http.{HttpOrigin, Uri}
+import spray.http.{ HttpOrigin, Uri }
 import scala.concurrent.duration._
 
 import scala.collection.immutable
 import scala.concurrent.forkjoin.ThreadLocalRandom
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 /**
  * Created by goldratio on 9/8/14.
@@ -39,12 +39,10 @@ object ConnectionActive {
 
   final case class OnFrame(sessionId: String, payload: ByteString) extends Command
 
-
   final case class SendMessage(sessionId: String, msg: String) extends Command
   final case class SendJson(sessionId: String, json: String) extends Command
   final case class SendEvent(sessionId: String, name: String, args: Either[String, Seq[String]]) extends Command
   final case class SendPackets(sessionId: String, packets: Seq[Packet]) extends Command
-
 
   final case class SendAck(sessionId: String, originalPacket: DataPacket, args: String) extends Command
 
@@ -52,7 +50,6 @@ object ConnectionActive {
    * ask me to publish an OnBroadcast data
    */
   final case class Broadcast(sessionId: String, room: String, packet: Packet) extends Command
-
 
   final case class OnPacket[T <: Packet](packet: T, connContext: ConnectionContext) extends ConsistentHashable {
     override def consistentHashKey: Any = connContext.sessionId
@@ -97,11 +94,9 @@ trait ConnectionActive { _: Actor =>
 
   def recoveryFinished: Boolean
 
-
   private lazy val scheduler = SocketIOExtension(context.system).scheduler
 
   private var idleTimeoutTask: Option[Cancellable] = None
-
 
   private var heartbeatTask: Option[Cancellable] = None
   private var closeTimeoutTask: Option[Cancellable] = None
@@ -174,7 +169,7 @@ trait ConnectionActive { _: Actor =>
     case cmd @ OnFrame(sessionId, payload) =>
       onPayload(cmd)(payload)
 
-    case SendMessage(sessionId,  msg)      =>
+    case SendMessage(sessionId, msg) =>
       sendMessage(msg)
 
     case text =>
@@ -190,11 +185,11 @@ trait ConnectionActive { _: Actor =>
 
   private def onPayload(cmd: Command)(payload: ByteString) {
     PacketParser(payload) match {
-      case Success(packets)              =>
+      case Success(packets) =>
         packets foreach onPacket(cmd)
       case Failure(ex: ParsingException) =>
         log.warning("Invalid socket.io packet: {} ...", payload.take(50).utf8String)
-      case Failure(ex)                   =>
+      case Failure(ex) =>
         log.warning("Exception during parse socket.io packet: {} ..., due to: {}", payload.take(50).utf8String, ex)
     }
   }

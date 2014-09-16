@@ -9,7 +9,7 @@ import akka.actor.{ ActorSystem, Actor, Props, ActorLogging, ActorRef }
 
 import scala.concurrent.Future
 
-case class User(userName: String, nickName: String, avatar: String, password: String = "", deviceToken: String="")
+case class User(userName: String, nickName: String, avatar: String, password: String = "", deviceToken: String = "")
 
 object UserFormat {
   implicit val userFormat = Json.format[User]

@@ -1,6 +1,6 @@
 package campfire.socketio
 
-import akka.actor.{ActorLogging, Actor, Props, ActorRef}
+import akka.actor.{ ActorLogging, Actor, Props, ActorRef }
 
 /**
  * Created by goldratio on 9/8/14.

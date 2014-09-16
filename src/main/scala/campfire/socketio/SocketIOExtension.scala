@@ -1,14 +1,14 @@
 package campfire.socketio
 
-import java.util.concurrent.{TimeUnit, ThreadFactory}
+import java.util.concurrent.{ TimeUnit, ThreadFactory }
 
 import akka.actor._
 import akka.dispatch.MonitorableThreadFactory
-import akka.event.{Logging, LoggingAdapter}
-import com.typesafe.config.{Config, ConfigFactory}
+import akka.event.{ Logging, LoggingAdapter }
+import com.typesafe.config.{ Config, ConfigFactory }
 
 import scala.collection.immutable
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 /**
  * Created by goldratio on 9/8/14.

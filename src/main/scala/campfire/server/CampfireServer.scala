@@ -10,12 +10,12 @@ import akka.util.Timeout
 import campfire.notification.NotificationProcessor
 import campfire.server.JsonResult._
 import campfire.server.RoomServerActor.CreateRoom
-import campfire.server.ServerExtension.{Subscribe, OnData, OnEvent}
+import campfire.server.ServerExtension.{ Subscribe, OnData, OnEvent }
 import campfire.socketio.ConnectionActive.SendMessage
 import play.api.libs.json.Json
-import rx.lang.scala.{Observable, Subject, Observer}
+import rx.lang.scala.{ Observable, Subject, Observer }
 import spray.can.Http
-import campfire.database.{OperationSync, UserSync, ReactiveMongoPlugin, MongoQuery}
+import campfire.database.{ OperationSync, UserSync, ReactiveMongoPlugin, MongoQuery }
 import spray.can.server.UHttp
 
 /**
@@ -25,7 +25,7 @@ object CampfireServer {
   def props(resovler: ActorRef, query: ActorRef) = Props(classOf[CampfireServer], resovler, query)
 }
 
-case class Message(fromUserName: String, toUserName: String, `type`: Int, content: String, clientMsgId: Long)
+case class Message(fromUserName: String, toUserName: String, timestamp: Long, `type`: Int, content: String, clientMsgId: Long)
 case class MessageEvent(name: String, content: Message)
 
 object MessageFormat {
@@ -44,9 +44,7 @@ class CampfireServer(resovler: ActorRef, query: ActorRef) extends Actor with Act
   }
 }
 
-
-object Main extends App with  CampfireSslConfiguration {
-
+object Main extends App with CampfireSslConfiguration {
 
   implicit val timeout = Timeout(120, TimeUnit.SECONDS)
   implicit val system = ActorSystem()
@@ -54,7 +52,6 @@ object Main extends App with  CampfireSslConfiguration {
   val resolver = serverExt.resolver
   val roomResolver = serverExt.roomResolver
   import system.dispatcher
-
 
   ReactiveMongoPlugin.start(system)
 
@@ -73,12 +70,11 @@ object Main extends App with  CampfireSslConfiguration {
                 val messageEvent = MessageEvent("chat", packet)
                 resolver ! SendMessage(sessionId, Json.toJson(messageEvent).toString())
               }
-              .getOrElse {
-                notificationProcessor ! packet
-              }
+                .getOrElse {
+                  notificationProcessor ! packet
+                }
             }
-          }
-          catch {
+          } catch {
             case e: Exception =>
               e.printStackTrace()
           }
@@ -100,8 +96,7 @@ object Main extends App with  CampfireSslConfiguration {
                 }
               }
             }
-          }
-          catch {
+          } catch {
             case e: Exception =>
               e.printStackTrace()
           }
@@ -109,8 +104,7 @@ object Main extends App with  CampfireSslConfiguration {
           try {
             val users = Json.parse(args).as[List[String]]
             roomResolver ! CreateRoom(users)
-          }
-          catch {
+          } catch {
             case e: Exception =>
               e.printStackTrace()
           }
@@ -121,8 +115,7 @@ object Main extends App with  CampfireSslConfiguration {
             packets.foreach { packet =>
               roomResolver ! packet
             }
-          }
-          catch {
+          } catch {
             case e: Exception =>
               e.printStackTrace()
           }

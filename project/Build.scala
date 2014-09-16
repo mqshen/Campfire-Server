@@ -41,12 +41,17 @@ object Dependencies {
 
   val spray_websocket = "com.wandoulabs.akka" %% "spray-websocket" % "0.1.2"
   val spray_can = "io.spray" % "spray-can" % SPRAY_VERSION
+  val spray_client = "io.spray" % "spray-client" % SPRAY_VERSION
   val akka_actor = "com.typesafe.akka" %% "akka-actor" % AKKA_VERSION
   val akka_contrib = "com.typesafe.akka" %% "akka-contrib" % AKKA_VERSION
+  val akka_testkit = "com.typesafe.akka" %% "akka-testkit" % AKKA_VERSION % "test"
+  val akka_multinode_testkit = "com.typesafe.akka" %% "akka-multi-node-testkit" % AKKA_VERSION % "test"
+  val scalatest = "org.scalatest" %% "scalatest" % "2.0" % "test"
   val rxscala = "com.netflix.rxjava" % "rxjava-scala" % "0.17.1"
+  val apache_math = "org.apache.commons" % "commons-math3" % "3.2"
   val parboiled = "org.parboiled" %% "parboiled-scala" % "1.1.5"
   val parboiled2 = "org.parboiled" %% "parboiled" % "2.0-M2"
-  val caliper = "com.google.caliper" % "caliper" % "0.5-rc1" % "test"
+  val caliper = "com.google.caliper" % "caliper" % "1.0-beta-1" % "test"
   val reactivemongo = "org.reactivemongo" %% "reactivemongo" % "0.10.5.akka23-SNAPSHOT"
   val playFunctional = "com.typesafe.play" %% "play-iteratees" % "2.3.0"
   val playIteratee = "com.typesafe.play" %% "play-functional" % "2.3.0"
@@ -74,13 +79,16 @@ val all = Seq(
   playJson,
   jodaConvert,
   parboiled,
-  reactivemongo
+  reactivemongo,
+  scalatest,
+  akka_testkit,
+  akka_multinode_testkit,
+  apache_math,
+  spray_client,
+  caliper
 //  jodatime,
-//  //akka_testkit,
 // akka_multinode_testkit,
-//  //scalatest,
 //  //apache_math,
-//  caliper,
 //  //socketio,
 //  , playIteratee,
 ) ++ jacksons

@@ -4,24 +4,22 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.Actor.Receive
 import akka.pattern.ask
-import akka.actor.{Props, ActorSystem, ActorLogging, Actor}
+import akka.actor.{ Props, ActorSystem, ActorLogging, Actor }
 import akka.util.Timeout
-import campfire.database.{UserInfo, User, MongoQuery}
+import campfire.database.{ UserInfo, User, MongoQuery }
 import campfire.notification.apns.ApnsService
-import campfire.notification.apns.internal.{Payload, Utilities, ApnsNotification, ApnsDelegateImpl}
-import campfire.server.{CampfireSslConfiguration, Message}
-import com.typesafe.config.{Config, ConfigFactory}
+import campfire.notification.apns.internal.{ Payload, Utilities, ApnsNotification, ApnsDelegateImpl }
+import campfire.server.{ CampfireSslConfiguration, Message }
+import com.typesafe.config.{ Config, ConfigFactory }
 
 /**
  * Created by goldratio on 9/14/14.
  */
-object NotificationProcessor
-{
+object NotificationProcessor {
   def props() = Props(classOf[NotificationProcessor])
 }
 
-class NotificationProcessor extends  Actor with ActorLogging
-{
+class NotificationProcessor extends Actor with ActorLogging {
   import context.dispatcher
   implicit val timeout = Timeout(120, TimeUnit.SECONDS)
 
@@ -45,18 +43,17 @@ class NotificationProcessor extends  Actor with ActorLogging
       f onSuccess {
         case user: User =>
           val payload = Payload(message.content, 1)
-          apns ! ApnsNotification(user.deviceToken , payload , 1, 3)
+          apns ! ApnsNotification(user.deviceToken, payload, 1, 3)
       }
-//    case s : String =>
-//      println(new String(deviceToken))
-//
-//      val payload = Utilities.marshall(0, deviceToken, "{\"aps\":{\"alert\": \"hello for text\", \"badge\": \"1\"}}".getBytes())
-//      apns ! ApnsNotification("" , "" , 1, 3, payload)
+    //    case s : String =>
+    //      println(new String(deviceToken))
+    //
+    //      val payload = Utilities.marshall(0, deviceToken, "{\"aps\":{\"alert\": \"hello for text\", \"badge\": \"1\"}}".getBytes())
+    //      apns ! ApnsNotification("" , "" , 1, 3, payload)
   }
 
 }
-object Test extends App with  CampfireSslConfiguration {
-
+object Test extends App with CampfireSslConfiguration {
 
   implicit val timeout = Timeout(120, TimeUnit.SECONDS)
   implicit val system = ActorSystem()

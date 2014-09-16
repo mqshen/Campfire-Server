@@ -1,6 +1,6 @@
 package campfire.socketio.packet
 
-import akka.util.{ByteStringBuilder, ByteString}
+import akka.util.{ ByteStringBuilder, ByteString }
 
 import scala.annotation.tailrec
 
@@ -107,7 +107,6 @@ final case class JsonPacket(id: Long, hasAckData: Boolean, json: String) extends
   }
 }
 
-
 final case class AckPacket(ackId: Long, args: String) extends Packet {
   def code = '6'
   def endpoint = ""
@@ -135,7 +134,6 @@ final case class AckPacket(ackId: Long, args: String) extends Packet {
     builder.result.compact
   }
 }
-
 
 final case class ErrorPacket(reason: String, advice: String = "") extends Packet {
   def code = '7'

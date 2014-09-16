@@ -1,7 +1,7 @@
 package campfire.server
 
-import java.security.{SecureRandom, KeyStore}
-import javax.net.ssl.{TrustManagerFactory, KeyManagerFactory, SSLContext}
+import java.security.{ SecureRandom, KeyStore }
+import javax.net.ssl.{ TrustManagerFactory, KeyManagerFactory, SSLContext }
 
 import spray.io.ServerSSLEngineProvider
 

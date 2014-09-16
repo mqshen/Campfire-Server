@@ -1,6 +1,6 @@
 package campfire.server
 
-import java.io.{FileInputStream, BufferedInputStream}
+import java.io.{ FileInputStream, BufferedInputStream }
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -8,14 +8,14 @@ import akka.pattern.ask
 import akka.actor._
 import akka.io.Tcp
 import akka.util.Timeout
-import campfire.database.{User, UserAuth}
+import campfire.database.{ User, UserAuth }
 import campfire.server.JsonResult._
 import campfire.socketio
 import campfire.socketio.ConnectionActive
-import spray.http.HttpHeaders.{`Set-Cookie`, Cookie}
-import campfire.socketio.transport.{Transport, WebSocket}
+import spray.http.HttpHeaders.{ `Set-Cookie`, Cookie }
+import campfire.socketio.transport.{ Transport, WebSocket }
 import spray.can.server.UHttp
-import spray.can.{Http, websocket}
+import spray.can.{ Http, websocket }
 import spray.http._
 import play.api.libs.json._
 
@@ -30,7 +30,6 @@ import spray.can.websocket.FrameCommandFailed
 /**
  * Created by goldratio on 9/8/14.
  */
-
 
 object WebSocketWorker {
   def props(serverConnection: ActorRef) = Props(classOf[WebSocketWorker], serverConnection)
@@ -163,7 +162,7 @@ class CampfireWorker(val serverConnection: ActorRef, resolver: ActorRef, query: 
       entity.as[FormData] match {
         case Right(formData) => {
           val userAuth = formData.fields.foldLeft(UserAuth("", "")) {
-            case (userAuth, ("login", value: String)) =>
+            case (userAuth, ("userName", value: String)) =>
               userAuth.copy(userName = value)
             case (userAuth, ("password", value: String)) =>
               userAuth.copy(password = value)
@@ -223,27 +222,28 @@ class CampfireWorker(val serverConnection: ActorRef, resolver: ActorRef, query: 
   }
 
   def sessionIdGenerator: HttpRequest => Future[String] = {
-    req => {
-      Future(
-        getSessionId(req).map { sessionId =>
-          if (SessionManager.getUserNameBySession(sessionId).isDefined)
-            sessionId
-          else {
+    req =>
+      {
+        Future(
+          getSessionId(req).map { sessionId =>
+            if (SessionManager.getUserNameBySession(sessionId).isDefined)
+              sessionId
+            else {
+              println("session not found")
+              throw new Exception("The call failed!!")
+            }
+          }.getOrElse {
             println("session not found")
             throw new Exception("The call failed!!")
-          }
-        }.getOrElse {
-          println("session not found")
-          throw new Exception("The call failed!!")
-        })
-    }
+          })
+      }
   }
 
   def getSessionId(request: HttpRequest): Option[String] = {
     request.headers.find(
       head => head.isInstanceOf[Cookie]).map { session =>
-      session.asInstanceOf[Cookie].cookies.find(cookie => cookie.name == "session")
-        .map(session => session.content)
-    }.getOrElse(None)
+        session.asInstanceOf[Cookie].cookies.find(cookie => cookie.name == "session")
+          .map(session => session.content)
+      }.getOrElse(None)
   }
 }

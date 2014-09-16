@@ -6,8 +6,7 @@ import javax.net.SocketFactory
  * Created by goldratio on 9/14/14.
  */
 
-object ApnsFeedbackConnection
-{
+object ApnsFeedbackConnection {
   val DELAY_IN_MS = 1000
   val RETRIES = 3
 
@@ -18,9 +17,8 @@ object ApnsFeedbackConnection
   }
 
 }
-class ApnsFeedbackConnection(factory: SocketFactory, host: String, port: Int, proxy: Option[Proxy] ,
-                             readTimeout: Int , connectTimeout: Int , proxyUsername: Option[String] ,
-                             proxyPassword: Option[String] )
-{
+class ApnsFeedbackConnection(factory: SocketFactory, host: String, port: Int, proxy: Option[Proxy],
+                             readTimeout: Int, connectTimeout: Int, proxyUsername: Option[String],
+                             proxyPassword: Option[String]) {
 
 }

@@ -1,7 +1,7 @@
 package campfire.database
 
 import akka.actor.Actor.Receive
-import akka.actor.{Props, ActorLogging, Actor}
+import akka.actor.{ Props, ActorLogging, Actor }
 import campfire.server.Message
 import play.api.libs.json.Json
 import play.modules.reactivemongo.json.collection.JSONCollection
@@ -9,13 +9,11 @@ import play.modules.reactivemongo.json.collection.JSONCollection
 /**
  * Created by goldratio on 9/14/14.
  */
-object PersistenceProcessor
-{
+object PersistenceProcessor {
   def props() = Props(classOf[PersistenceProcessor])
 }
 
-class PersistenceProcessor extends  Actor with ActorLogging
-{
+class PersistenceProcessor extends Actor with ActorLogging {
   import context.dispatcher
   val db = ReactiveMongoPlugin.db
 
@@ -34,8 +32,7 @@ class PersistenceProcessor extends  Actor with ActorLogging
         "content" -> Json.toJson(message))
 
       collection.insert(json).map(lastError =>
-        println("Mongo LastError: %s".format(lastError))
-      )
+        println("Mongo LastError: %s".format(lastError)))
 
   }
 }

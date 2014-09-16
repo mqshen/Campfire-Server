@@ -3,7 +3,7 @@ package campfire.socketio.transport
 import akka.actor.ActorRef
 import akka.util.ByteString
 import campfire.socketio.ConnectionContext
-import campfire.socketio.packet.{Packet, NoopPacket, HeartbeatPacket}
+import campfire.socketio.packet.{ Packet, NoopPacket, HeartbeatPacket }
 import spray.can.websocket.FrameCommand
 import spray.can.websocket.frame.TextFrame
 
@@ -14,17 +14,16 @@ import scala.collection.immutable
  */
 object Transport {
   val transportIds = Set(
-//    XhrPolling,
-//    XhrMultipart,
-//    HtmlFile,
+    //    XhrPolling,
+    //    XhrMultipart,
+    //    HtmlFile,
     WebSocket,
-//    FlashSocket,
-//    JsonpPolling,
+    //    FlashSocket,
+    //    JsonpPolling,
     Empty).map(x => x.ID -> x).toMap
 
   def isSupported(id: String) = transportIds.contains(id) && id != Empty.ID
 }
-
 
 trait Transport extends Serializable {
   def ID: String
