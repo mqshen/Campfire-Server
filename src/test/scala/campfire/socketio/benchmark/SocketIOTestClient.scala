@@ -3,8 +3,12 @@ package campfire.socketio.benchmark
 /**
  * Created by goldratio on 9/16/14.
  */
+
+import scala.util.{Success, Failure}
 import akka.actor._
+import akka.dispatch.sysmsg.Failed
 import akka.io.IO
+import akka.pattern.ask
 import campfire.database.UserAuth
 import campfire.server.{Message, MessageFormat}
 import campfire.socketio.packet.{MessagePacket, EventPacket, Packet}
@@ -24,9 +28,13 @@ import spray.client.pipelining._
 
 import scala.concurrent.forkjoin.ThreadLocalRandom
 import scala.tools.nsc.interactive.Response
-import scala.util.Success
+
+import spray.util._
 
 object SocketIOTestClient {
+  implicit val system = ActorSystem()
+  import system.dispatcher
+
   private var _nextId = 0
   private def nextId = {
     _nextId += 1
@@ -56,28 +64,32 @@ object SocketIOTestClient {
         case Array(host: String, port: String) => (s"http://${host}:${port}/session",Http.Connect(host, port.toInt))
       })
 
-    implicit val system = ActorSystem()
 
     val connectAddress = connect(ThreadLocalRandom.current.nextInt(connect.size))
     val uri = Uri(connectAddress._1)
-    import system.dispatcher
     val pipeline = sendReceive
     val responseFuture: Future[HttpResponse] = pipeline(Post(uri, FormData(Seq("userName"->"goldratio", "password"->"111111"))))
     responseFuture onComplete {
       case Success(response) =>
-        println(response)
         val sessionId = response.headers.foldLeft("") {
           case (sessionId, HttpHeader("set-cookie", session)) =>
             session.substring(8)
           case head =>
             head._1
         }
+        println(sessionId)
+        shutdown()
         val socketIOTestClientTest = system.actorOf(Props(new SocketIOTestClientTest()))
         val client = system.actorOf(Props(new SocketIOTestClient(connectAddress._2, sessionId, socketIOTestClientTest)))
         client ! SocketIOTestClient.SendTimestampedChat
+      case Failure(error) =>
+        shutdown()
     }
+  }
 
-
+  def shutdown(): Unit = {
+    IO(Http).ask(Http.CloseAll)(1.second).await
+    system.shutdown()
   }
 }
 
@@ -95,7 +107,13 @@ class SocketIOTestClient(connect: Http.Connect, val sessionId: String, commander
   val Id = nextId.toString
 
   import context.system
-  IO(UHttp)(ActorSystem("websocket")) ! connect
+  try {
+    IO(UHttp)(ActorSystem("websocket")) ! connect
+  }
+  catch {
+    case e:Exception =>
+      e.printStackTrace()
+  }
 
   def businessLogic: Receive = {
     case SendHello           => connection ! TextFrame("5:::{\"name\":\"hello\", \"args\":[]}")

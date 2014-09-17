@@ -6,6 +6,7 @@ import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Cancellable
 import akka.actor.Props
+import akka.io.IO
 import akka.pattern.ask
 import com.typesafe.config.ConfigFactory
 import java.io.BufferedWriter
@@ -25,7 +26,10 @@ import campfire.socketio.benchmark.SocketIOTestClient.MessageArrived
 import campfire.socketio.benchmark.SocketIOTestClient.OnClose
 import campfire.socketio.benchmark.SocketIOTestClient.OnOpen
 
-import scala.util.Success
+
+import spray.util._
+
+import scala.util.{Failure, Success}
 
 object SocketIOLoadDriver {
   val config = ConfigFactory.load().getConfig("spray.socketio.benchmark")
@@ -235,24 +239,29 @@ class SocketIOLoadDriver extends Actor with ActorLogging {
         val responseFuture: Future[HttpResponse] = pipeline(Post(uri, FormData(Seq("userName"->"goldratio", "password"->"111111"))))
         responseFuture onComplete {
           case Success(response) =>
-            println(response)
             val sessionId = response.headers.foldLeft("") {
               case (sessionId, HttpHeader("set-cookie", session)) =>
                 session.substring(8)
               case head =>
                 head._1
             }
-            val socketIOTestClientTest = system.actorOf(Props(new SocketIOTestClientTest()))
-            val client = system.actorOf(Props(new SocketIOTestClient(connectAddress._2, sessionId, socketIOTestClientTest)))
+            val client = system.actorOf(Props(new SocketIOTestClient(connectAddress._2, sessionId, self)))
             clients ::= client
             i += 1
+            creatingTimeout = Some(system.scheduler.scheduleOnce(creatingBunchClientsTimeout.seconds, self, CreatingTimeout))
+            print(".")
+            shutdown()
+          case Failure(error) =>
+            shutdown()
         }
         //val client = system.actorOf(Props(new SocketIOTestClient(connect(ThreadLocalRandom.current.nextInt(connect.size)), "", self)))
       }
-      import system.dispatcher
-      creatingTimeout = Some(system.scheduler.scheduleOnce(creatingBunchClientsTimeout.seconds, self, CreatingTimeout))
-      print(".")
     }
+  }
+
+  def shutdown(): Unit = {
+    IO(Http) ! Http.CloseAll
+    //system.shutdown()
   }
 
   private def nMessagesExpected = if (isBroadcast) nMessagesSent * nConnections else nMessagesSent
