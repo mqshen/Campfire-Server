@@ -28,13 +28,14 @@ class NotificationProcessor extends Actor with ActorLogging {
   class Settings(config: Config) {
     val host = config.getString("server.host")
     val port = config.getInt("server.port")
+    val cert = config.getString("cert")
+    val password = config.getString("password")
   }
 
   val mongoActor = context.actorOf(MongoQuery.props())
 
   val delegate = new ApnsDelegateImpl()
-  val apns = context.actorOf(ApnsService.props("/Users/goldratio/Documents/ios/Certificates.p12", "miao1qi2",
-    Settings.host, Settings.port, delegate))
+  val apns = context.actorOf(ApnsService.props(Settings.cert, Settings.password, Settings.host, Settings.port, delegate))
 
   override def receive: Receive = {
     case message: Message =>
