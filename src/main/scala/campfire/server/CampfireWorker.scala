@@ -185,6 +185,7 @@ class CampfireWorker(val serverConnection: ActorRef, resolver: ActorRef, query: 
           }
           f onFailure {
             case t =>
+              println(t)
               val result = "An error has occured: " + t.getMessage
               val entity = HttpEntity(ContentType(MediaTypes.`application/json`), result)
               currentSender ! HttpResponse(entity = entity)

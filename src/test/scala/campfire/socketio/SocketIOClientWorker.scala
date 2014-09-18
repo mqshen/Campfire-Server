@@ -96,6 +96,9 @@ trait SocketIOClientWorker extends ActorLogging { _: Actor =>
         case Failure(ex) =>
           log.warning("Exception during parse socket.io packet: {} ..., due to: {}", payload.take(50).utf8String, ex)
       }
+
+    case test =>
+      println(test)
   }
 
   def handleSocketio: Receive = {
@@ -126,7 +129,9 @@ trait SocketIOClientWorker extends ActorLogging { _: Actor =>
 
     // -- sending logic
 
-    case SendPacket(packet) => connection ! TextFrame(packet.render)
+    case SendPacket(packet) =>
+      System.out.println(packet.render)
+      connection ! TextFrame(packet.render)
 
     case SendPacketWithAck(packet, ackAction) =>
       idToAckAction += (packet.id -> ackAction)

@@ -4,6 +4,8 @@ package campfire.socketio.benchmark
  * Created by goldratio on 9/16/14.
  */
 
+import campfire.socketio.benchmark.SocketIOTestClient.MessageArrived
+
 import scala.util.{Success, Failure}
 import akka.actor._
 import akka.dispatch.sysmsg.Failed
@@ -78,25 +80,29 @@ object SocketIOTestClient {
             head._1
         }
         println(sessionId)
+        system.actorOf(Props(new SocketIOTestClientTest(sessionId, connectAddress._2)))
         shutdown()
-        val socketIOTestClientTest = system.actorOf(Props(new SocketIOTestClientTest()))
-        val client = system.actorOf(Props(new SocketIOTestClient(connectAddress._2, sessionId, socketIOTestClientTest)))
-        client ! SocketIOTestClient.SendTimestampedChat
       case Failure(error) =>
         shutdown()
     }
   }
 
   def shutdown(): Unit = {
-    IO(Http).ask(Http.CloseAll)(1.second).await
-    system.shutdown()
+    //IO(Http).ask(Http.CloseAll)(1.second).await
+    //system.shutdown()
   }
 }
 
 
-class SocketIOTestClientTest extends Actor with ActorLogging {
+class SocketIOTestClientTest(sessionId: String,connect : Http.Connect) extends Actor with ActorLogging {
+
+  val client = context.actorOf(Props(new SocketIOTestClient(connect, sessionId, self)))
+
   override def receive: Actor.Receive = {
+    case MessageArrived(roundtripTime: Long) =>
+      client ! SocketIOTestClient.SendTimestampedChat
     case e =>
+      client ! SocketIOTestClient.SendTimestampedChat
       println(e)
   }
 }
@@ -116,9 +122,15 @@ class SocketIOTestClient(connect: Http.Connect, val sessionId: String, commander
   }
 
   def businessLogic: Receive = {
-    case SendHello           => connection ! TextFrame("5:::{\"name\":\"hello\", \"args\":[]}")
-    case SendTimestampedChat => connection ! TextFrame(timestampedChat)
-    case SendBroadcast(msg)  => connection ! TextFrame("""5:::{"name":"broadcast", "args":[""" + "\"" + msg + "\"" + "]}")
+    case SendHello           =>
+      connection ! TextFrame("5:::{\"name\":\"hello\", \"args\":[]}")
+    case SendTimestampedChat =>
+      println(timestampedChat)
+      connection ! TextFrame(timestampedChat)
+    case SendBroadcast(msg)  =>
+      connection ! TextFrame("""5:::{"name":"broadcast", "args":[""" + "\"" + msg + "\"" + "]}")
+//    case test:TextFrame =>
+//      println(test.payload)
   }
 
   override def onDisconnected(args: Seq[(String, String)]) {
@@ -147,11 +159,11 @@ class SocketIOTestClient(connect: Http.Connect, val sessionId: String, commander
   }
 
   def chat(message: String): String = {
-    "5::{\"name\":\"chat\",\"args\":[{\"fromUserName\":\"mqshen\",\"toUserName\":\"mqshen\",\"content\":\"23\",\"type\":1,\"clientMsgId\":123123}]}"
+    "5::{\"name\":\"chat\",\"args\":[{\"fromUserName\":\"mqshen\",\"timestamp\":" + message + ",\"toUserName\":\"mqshen\",\"content\":\"23\",\"type\":1,\"clientMsgId\":123123}]}"
   }
 
   def timestampedChat = {
-    val message = Id + "," + System.currentTimeMillis
+    val message = System.currentTimeMillis.toString
     chat(message)
   }
 
