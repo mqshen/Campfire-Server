@@ -79,7 +79,6 @@ object SocketIOTestClient {
           case head =>
             head._1
         }
-        println(sessionId)
         system.actorOf(Props(new SocketIOTestClientTest(sessionId, connectAddress._2)))
         shutdown()
       case Failure(error) =>
@@ -103,7 +102,6 @@ class SocketIOTestClientTest(sessionId: String,connect : Http.Connect) extends A
       client ! SocketIOTestClient.SendTimestampedChat
     case e =>
       client ! SocketIOTestClient.SendTimestampedChat
-      println(e)
   }
 }
 
@@ -125,7 +123,6 @@ class SocketIOTestClient(connect: Http.Connect, val sessionId: String, commander
     case SendHello           =>
       connection ! TextFrame("5:::{\"name\":\"hello\", \"args\":[]}")
     case SendTimestampedChat =>
-      println(timestampedChat)
       connection ! TextFrame(timestampedChat)
     case SendBroadcast(msg)  =>
       connection ! TextFrame("""5:::{"name":"broadcast", "args":[""" + "\"" + msg + "\"" + "]}")
@@ -155,11 +152,14 @@ class SocketIOTestClient(connect: Http.Connect, val sessionId: String, commander
       case msg: MessagePacket => commander ! msg.data
       case _                  =>
     }
+  }
 
+  override def onAck(id: Long, args: String): Unit = {
+    commander ! MessageArrived(args.toLong)
   }
 
   def chat(message: String): String = {
-    "5::{\"name\":\"chat\",\"args\":[{\"fromUserName\":\"mqshen\",\"timestamp\":" + message + ",\"toUserName\":\"mqshen\",\"content\":\"23\",\"type\":1,\"clientMsgId\":123123}]}"
+    "5:" + Id + "+:{\"name\":\"chat\",\"args\":[{\"fromUserName\":\"mqshen\",\"timestamp\":" + message + ",\"toUserName\":\"mqshen\",\"content\":\"23\",\"type\":1,\"clientMsgId\":123123}]}"
   }
 
   def timestampedChat = {

@@ -53,64 +53,66 @@ object ApnsConnection {
   //  }
   def props(factory: SocketFactory, host: String, port: Int, proxy: Option[Proxy],
             proxyUsername: Option[String], proxyPassword: Option[String], reconnectPolicy: ReconnectPolicy,
-            delegate: ApnsDelegate, errorDetection: Boolean = true, tf: Option[ThreadFactory] = None,
+            delegate: ApnsDelegate, errorDetection: Boolean = true,
             cacheLength: Int = 0, autoAdjustCacheLength: Boolean = false, readTimeout: Int, connectTimeout: Int) =
     Props(classOf[ApnsConnection], factory, host, port, proxy, proxyUsername,
-      proxyPassword, reconnectPolicy, delegate, errorDetection, tf, cacheLength,
+      proxyPassword, reconnectPolicy, delegate, errorDetection, cacheLength,
       autoAdjustCacheLength, readTimeout, connectTimeout)
 }
 
 class ApnsConnection(factory: SocketFactory, host: String, port: Int, proxy: Option[Proxy],
                      proxyUsername: Option[String], proxyPassword: Option[String], reconnectPolicy: ReconnectPolicy,
-                     delegate: ApnsDelegate, errorDetection: Boolean, tf: Option[ThreadFactory], cacheLength: Int,
+                     delegate: ApnsDelegate, errorDetection: Boolean, cacheLength: Int,
                      autoAdjustCacheLength: Boolean, readTimeout: Int, connectTimeout: Int) extends Actor with ActorLogging {
 
-  import ApnsConnection._
-  val threadFactory = tf.getOrElse(defaultThreadFactory())
-
-  var socket: Option[Socket] = None
-
-  def defaultThreadFactory() {
-    new ThreadFactory() {
-      val wrapped = Executors.defaultThreadFactory()
-
-      override def newThread(r: Runnable): Thread = {
-        val result = wrapped.newThread(r)
-        result.setName("MonitoringThread-" + threadId.incrementAndGet())
-        result.setDaemon(true)
-        result
-      }
-    }
+  var socket: Socket =  {
+    val s = factory.createSocket(host, port)
+    s.setSoTimeout(readTimeout)
+    s.setKeepAlive(true)
+    reconnectPolicy.reconnected()
+    s
   }
+//  val threadFactory = tf.getOrElse(defaultThreadFactory())
+//
+//
+//  def defaultThreadFactory() {
+//    new ThreadFactory() {
+//      val wrapped = Executors.defaultThreadFactory()
+//
+//      override def newThread(r: Runnable): Thread = {
+//        val result = wrapped.newThread(r)
+//        result.setName("MonitoringThread-" + threadId.incrementAndGet())
+//        result.setDaemon(true)
+//        result
+//      }
+//    }
+//  }
 
-  def connect: Receive = {
-    case Connect =>
-      socket = Some(factory.createSocket(host, port))
-      socket.map { s =>
-        s.setSoTimeout(readTimeout)
-        s.setKeepAlive(true)
-        reconnectPolicy.reconnected()
-        context.become(process)
-      }
-  }
+//  def connect: Receive = {
+//    case Connect =>
+//      socket = Some(factory.createSocket(host, port))
+//      socket.map { s =>
+//        s.setSoTimeout(readTimeout)
+//        s.setKeepAlive(true)
+//        reconnectPolicy.reconnected()
+//        context.become(process)
+//      }
+//  }
 
-  def process: Receive = {
+  override def receive: Actor.Receive = {
     case notification: ApnsNotification =>
-      socket.map { s =>
-        implicit val payloadFormat = Json.format[Payload]
-        val aps = Json.obj("aps" -> Json.toJson(notification.aps)).toString().getBytes()
-        val payload = Utilities.marshall(0, Utilities.decodeHex(notification.deviceToken), aps)
+      implicit val payloadFormat = Json.format[Payload]
+      val aps = Json.obj("aps" -> Json.toJson(notification.aps)).toString().getBytes()
+      val payload = Utilities.marshall(0, Utilities.decodeHex(notification.deviceToken), aps)
 
-        try {
-          s.getOutputStream().write(payload)
-          s.getOutputStream().flush()
-          delegate.messageSent(notification)
-        } catch {
-          case e: Exception =>
-            e.printStackTrace()
-        }
+      try {
+        socket.getOutputStream().write(payload)
+        socket.getOutputStream().flush()
+        delegate.messageSent(notification)
+      }
+      catch {
+        case e: Exception =>
+          e.printStackTrace()
       }
   }
-
-  override def receive: Actor.Receive = connect orElse process
 }

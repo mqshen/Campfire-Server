@@ -171,6 +171,8 @@ trait ConnectionActive { _: Actor =>
 
     case SendMessage(sessionId, msg) =>
       sendMessage(msg)
+    case SendAck(sessionId, packet, args) =>
+      sendAck(packet, args)
 
     case text =>
       println("test: " + text)

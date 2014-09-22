@@ -49,7 +49,7 @@ object Main extends App with CampfireSslConfiguration {
   implicit val timeout = Timeout(120, TimeUnit.SECONDS)
   implicit val system = ActorSystem()
   val serverExt = ServerExtension(system)
-  val resolver = serverExt.resolver
+  implicit val resolver = serverExt.resolver
   val roomResolver = serverExt.roomResolver
   import system.dispatcher
 
@@ -62,10 +62,14 @@ object Main extends App with CampfireSslConfiguration {
     override def onNext(value: OnEvent) {
       value match {
         case event @ OnEvent("chat", args, context) =>
+
           try {
             import MessageFormat._
             val packets = Json.parse(args).as[List[Message]]
             packets.foreach { packet =>
+              if (event.packet.hasAckData) {
+                event.ack((System.currentTimeMillis() - packet.timestamp).toString)
+              }
               SessionManager.getSessionIdByName(packet.toUserName).map { sessionId =>
                 val messageEvent = MessageEvent("chat", packet)
                 resolver ! SendMessage(sessionId, Json.toJson(messageEvent).toString())
@@ -96,7 +100,8 @@ object Main extends App with CampfireSslConfiguration {
                 }
               }
             }
-          } catch {
+          }
+          catch {
             case e: Exception =>
               e.printStackTrace()
           }
@@ -104,7 +109,8 @@ object Main extends App with CampfireSslConfiguration {
           try {
             val users = Json.parse(args).as[List[String]]
             roomResolver ! CreateRoom(users)
-          } catch {
+          }
+          catch {
             case e: Exception =>
               e.printStackTrace()
           }
@@ -115,7 +121,8 @@ object Main extends App with CampfireSslConfiguration {
             packets.foreach { packet =>
               roomResolver ! packet
             }
-          } catch {
+          }
+          catch {
             case e: Exception =>
               e.printStackTrace()
           }

@@ -117,7 +117,6 @@ final case class AckPacket(ackId: Long, args: String) extends Packet {
     builder.putByte('6')
     builder.putByte(':')
     builder.putByte(':')
-    builder.putByte(':')
 
     if (ackId != -1 || args != "") {
       builder.putByte(':')
