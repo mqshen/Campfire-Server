@@ -58,7 +58,7 @@ object Dependencies {
   val playJson = "com.typesafe.play" %% "play-json" % "2.3.0"
   val jodatime = "joda-time" % "joda-time" % "2.3"
   val jodaConvert = "org.joda" % "joda-convert" % "1.6"
-  val akkaApns = "org.goldratio" %% "akka-apns" % "0.1.0"
+  val akkaApns = "com.github.mqshen" %% "akka-apns" % "0.1.0-SNAPSHOT"
 
   val jacksons = Seq(
     "jackson-core",
