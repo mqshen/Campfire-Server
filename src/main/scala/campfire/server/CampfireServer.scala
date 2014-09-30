@@ -1,21 +1,21 @@
 package campfire.server
 
-import java.text.MessageFormat
 import java.util.concurrent.TimeUnit
 
 import akka.actor._
-import akka.pattern.ask
 import akka.io.IO
+import akka.pattern.ask
 import akka.util.Timeout
-import campfire.notification.NotificationProcessor
+import campfire.database._
 import campfire.server.JsonResult._
 import campfire.server.RoomServerActor.CreateRoom
-import campfire.server.ServerExtension.{ Subscribe, OnData, OnEvent }
+import campfire.server.ServerExtension.{ OnData, OnEvent, Subscribe }
 import campfire.socketio.ConnectionActive.SendMessage
+import org.goldratio.apns
+import org.goldratio.apns.NotificationProcessor
 import play.api.libs.json.Json
-import rx.lang.scala.{ Observable, Subject, Observer }
+import rx.lang.scala.{ Observable, Observer, Subject }
 import spray.can.Http
-import campfire.database.{ OperationSync, UserSync, ReactiveMongoPlugin, MongoQuery }
 import spray.can.server.UHttp
 
 /**
@@ -51,7 +51,7 @@ object Main extends App with CampfireSslConfiguration {
   val serverExt = ServerExtension(system)
   implicit val resolver = serverExt.resolver
   val roomResolver = serverExt.roomResolver
-  import system.dispatcher
+  import campfire.server.Main.system.dispatcher
 
   ReactiveMongoPlugin.start(system)
 
@@ -64,7 +64,7 @@ object Main extends App with CampfireSslConfiguration {
         case event @ OnEvent("chat", args, context) =>
 
           try {
-            import MessageFormat._
+            import campfire.server.MessageFormat._
             val packets = Json.parse(args).as[List[Message]]
             packets.foreach { packet =>
               if (event.packet.hasAckData) {
@@ -73,10 +73,13 @@ object Main extends App with CampfireSslConfiguration {
               SessionManager.getSessionIdByName(packet.toUserName).map { sessionId =>
                 val messageEvent = MessageEvent("chat", packet)
                 resolver ! SendMessage(sessionId, Json.toJson(messageEvent).toString())
-              }
-                .getOrElse {
-                  notificationProcessor ! packet
+              }.getOrElse {
+                val f = mongoActor ? UserInfo(packet.toUserName)
+                f onSuccess {
+                  case user: User =>
+                    notificationProcessor ! apns.Message(user.deviceToken, packet.content, 1)
                 }
+              }
             }
           } catch {
             case e: Exception =>
@@ -100,8 +103,7 @@ object Main extends App with CampfireSslConfiguration {
                 }
               }
             }
-          }
-          catch {
+          } catch {
             case e: Exception =>
               e.printStackTrace()
           }
@@ -109,20 +111,18 @@ object Main extends App with CampfireSslConfiguration {
           try {
             val users = Json.parse(args).as[List[String]]
             roomResolver ! CreateRoom(users)
-          }
-          catch {
+          } catch {
             case e: Exception =>
               e.printStackTrace()
           }
         case event @ OnEvent("chatRoom", args, context) =>
           try {
-            import MessageFormat._
+            import campfire.server.MessageFormat._
             val packets = Json.parse(args).as[List[Message]]
             packets.foreach { packet =>
               roomResolver ! packet
             }
-          }
-          catch {
+          } catch {
             case e: Exception =>
               e.printStackTrace()
           }

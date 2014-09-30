@@ -58,6 +58,7 @@ object Dependencies {
   val playJson = "com.typesafe.play" %% "play-json" % "2.3.0"
   val jodatime = "joda-time" % "joda-time" % "2.3"
   val jodaConvert = "org.joda" % "joda-convert" % "1.6"
+  val akkaApns = "org.goldratio" %% "akka-apns" % "0.1.0"
 
   val jacksons = Seq(
     "jackson-core",
@@ -70,6 +71,7 @@ object Dependencies {
 //    playIteratee, playJson, jodatime, jodaConvert
 //    //, spray_websocket
 //  ) ++ jacksons
+
 val all = Seq(
   spray_websocket,
   spray_can,
@@ -85,7 +87,8 @@ val all = Seq(
   akka_multinode_testkit,
   apache_math,
   spray_client,
-  caliper
+  caliper,
+  akkaApns
 //  jodatime,
 // akka_multinode_testkit,
 //  //apache_math,
